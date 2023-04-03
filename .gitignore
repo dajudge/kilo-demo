@@ -2,3 +2,4 @@ demo.config
 .idea/
 .gradle/
 build/
+kubeconfig.yaml
