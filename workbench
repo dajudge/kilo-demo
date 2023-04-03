@@ -1,0 +1,45 @@
+#! /bin/bash
+
+set -e
+
+DIR=$(dirname "$(readlink -f "$0")")
+
+if [ "$#" -eq 0 ]; then
+    CMD=bash
+else
+    CMD="$@"
+fi
+
+if [[ -e "/var/run/docker.sock" ]]; then
+  DOCKER_MOUNT="-v /var/run/docker.sock:/var/run/docker.sock"
+fi
+
+if [[ -e "/run/containerd/containerd.sock" ]]; then
+  CONTAINERD_MOUNT="-v /run/containerd/containerd.sock:/run/containerd/containerd.sock"
+fi
+
+if [[ -e "/tmp/.X11-unix" ]]; then
+  X11_MOUNT="-v /tmp/.X11-unix:/tmp/.X11-unix"
+fi
+
+if [[ -e "/var/run/dbus" ]]; then
+  DBUS_MOUNT="-v /var/run/dbus:/var/run/dbus"
+fi
+
+IMG="$(docker build -q $DIR/.workbench)"
+
+docker run --rm \
+    -v /etc/passwd:/etc/passwd:ro \
+    -v /etc/group:/etc/group:ro \
+    -v /etc/shadow:/etc/shadow:ro \
+    $DOCKER_MOUNT \
+    $CONTAINERD_MOUNT \
+    $X11_MOUNT \
+    $DBUS_MOUNT \
+    -e DISPLAY=$DISPLAY \
+    --privileged \
+    --net host \
+    --pid host \
+    --ipc host \
+    -v "$HOME:$HOME" \
+    -it $IMG sudo -u ${USER} -E sh -c "cd $DIR; KUBECONFIG=$DIR/kubeconfig.yaml HOME=$HOME $CMD"

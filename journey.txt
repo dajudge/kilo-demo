@@ -1,0 +1,3 @@
+kubectl label node 8cd1c0bb50d8 live-demo-container=true
+kubectl annotate node 8cd1c0bb50d8 --overwrite kilo.squat.ai/location=tc
+kubectl annotate node 8cd1c0bb50d8 kilo.squat.ai/persistent-keepalive=10
