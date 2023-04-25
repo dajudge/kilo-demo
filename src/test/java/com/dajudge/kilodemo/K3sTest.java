@@ -3,29 +3,40 @@ package com.dajudge.kilodemo;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.readString;
 import static java.util.stream.Collectors.toMap;
 
 public class K3sTest {
     @Test
     public void test() {
+        var agents = Stream.of(createAgent(), createAgent(), createAgent())
+                .peek(GenericContainer::start)
+                .collect(Collectors.toSet());
+
+        System.out.println("BLOCK HERE");
+
+        agents.forEach(GenericContainer::stop);
+    }
+
+    private static K3sAgentContainer<?> createAgent() {
         final Map<String, String> config = loadConfig("demo.config");
         K3sAgentContainer<?> agent = new K3sAgentContainer<>(config.get("HOST"), config.get("TOKEN"))
+                .withNetwork(Network.newNetwork())
                 .withExposedPorts(30001)
                 .waitingFor(new WaitAllStrategy())
                 .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(K3sTest.class)));
-        agent.start();
-        agent.stop();
+        return agent;
     }
 
     @NotNull
