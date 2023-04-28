@@ -20,19 +20,17 @@ import static java.util.stream.Collectors.toMap;
 public class K3sTest {
     @Test
     public void test() {
-        var agents = Stream.of(createAgent(), createAgent(), createAgent())
-                .peek(GenericContainer::start)
-                .collect(Collectors.toSet());
+        var agent = createAgent();
+        agent.start();
 
         System.out.println("BLOCK HERE");
 
-        agents.forEach(GenericContainer::stop);
+        agent.stop();
     }
 
     private static K3sAgentContainer<?> createAgent() {
         final Map<String, String> config = loadConfig("demo.config");
         K3sAgentContainer<?> agent = new K3sAgentContainer<>(config.get("HOST"), config.get("TOKEN"))
-                .withNetwork(Network.newNetwork())
                 .withExposedPorts(30001)
                 .waitingFor(new WaitAllStrategy())
                 .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(K3sTest.class)));
